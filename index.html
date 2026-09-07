@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendaftaran TEMBIKAR 2026</title>
+    <!-- CSS Utama dan Responsive -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="responsive.css">
+</head>
+<body>
+
+    <div class="form-container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="LOGO TEMBIKAR 2026.png" alt="Logo TEMBIKAR 2026" style="width: 100%; max-width: 180px; height: auto; display: block; margin: 0 auto;">
+        </div>
+    <div class="form-container">
+        <!-- Progress Bar -->
+        <div class="progress-wrapper">
+            <div class="progress-bar-bg">
+                <div id="progress-bar-fill" style="width: 14%;"></div>
+            </div>
+            <span id="progress-text">Langkah 1 dari 7</span>
+        </div>
+
+        <!-- STEP 1: WELCOME -->
+        <div id="step-1" class="wizard-step">
+            <h2>Pendaftaran TEMBIKAR 2026</h2>
+            <p>Selamat datang di portal pendaftaran resmi TEMBIKAR 2026. Siapkan data unit, pembina, dan daftar peserta sebelum memulai.</p>
+            <div class="action-buttons">
+                <button type="button" class="btn-next btn-primary">Mulai Pendaftaran</button>
+            </div>
+        </div>
+
+        <!-- STEP 2: PILIH JENJANG -->
+        <div id="step-2" class="wizard-step hidden">
+            <h2>Pilih Jenjang Lomba</h2>
+            <p class="subtitle">Silakan pilih jenjang tingkat peserta Anda:</p>
+            <div class="jenjang-grid">
+                <div class="jenjang-card" data-jenjang="MULA">
+                    <h3>MULA</h3>
+                    <p>Tingkat SD / MI Sederajat</p>
+                </div>
+                <div class="jenjang-card" data-jenjang="MADYA">
+                    <h3>MADYA</h3>
+                    <p>Tingkat SMP / MTs Sederajat</p>
+                </div>
+                <div class="jenjang-card" data-jenjang="WIRA">
+                    <h3>WIRA</h3>
+                    <p>Tingkat SMA / SMK / MA Sederajat</p>
+                </div>
+            </div>
+            <span id="error-jenjang" class="error-text"></span>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-prev">Kembali</button>
+                <button type="button" class="btn-next btn-primary" id="btn-jenjang-next" disabled>Lanjut</button>
+            </div>
+        </div>
+
+        <!-- STEP 3: DATA UNIT -->
+        <div id="step-3" class="wizard-step hidden">
+            <h2>Data Unit / Sekolah</h2>
+            
+            <div class="form-group">
+                <label for="unit">Nama Sekolah / Unit <span class="required">*</span></label>
+                <input type="text" id="unit" placeholder="Contoh: SMAN 1 Surabaya">
+                <span id="error-unit" class="error-text"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="noUnit">Nomor Unit <span class="required">*</span></label>
+                <input type="text" id="noUnit" placeholder="Contoh: 001 / PMA-01">
+                <span id="error-noUnit" class="error-text"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="cpNama">Nama Contact Person <span class="required">*</span></label>
+                <input type="text" id="cpNama" placeholder="Contoh: Budi Santoso">
+                <span id="error-cpNama" class="error-text"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="cpKontak">No. WhatsApp / Telepon <span class="required">*</span></label>
+                <input type="tel" id="cpKontak" placeholder="Contoh: 081234567890">
+                <span id="error-cpKontak" class="error-text"></span>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-prev">Kembali</button>
+                <button type="button" class="btn-next btn-primary">Lanjut</button>
+            </div>
+        </div>
+
+        <!-- STEP 4: PEMBINA -->
+        <div id="step-4" class="wizard-step hidden">
+            <h2>Pengisian Data Diri Pembina</h2>
+            <table class="form-table">
+                <thead>
+                    <tr>
+                        <th>Keterangan</th>
+                        <th>Nama</th>
+                        <th>No. MIS / NIP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Pembina 1</strong></td>
+                        <td><input type="text" id="pembina_nama_1" placeholder="Nama Pembina 1"></td>
+                        <td><input type="text" id="pembina_nip_1" placeholder="NIP/MIS"></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pembina 2</strong></td>
+                        <td><input type="text" id="pembina_nama_2" placeholder="Nama Pembina 2"></td>
+                        <td><input type="text" id="pembina_nip_2" placeholder="NIP/MIS"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-prev">Kembali</button>
+                <button type="button" class="btn-next btn-primary">Lanjut</button>
+            </div>
+        </div>
+
+        <!-- STEP 5: PESERTA -->
+        <div id="step-5" class="wizard-step hidden">
+            <h2>Pengisian Data Diri Peserta</h2>
+            <table class="form-table">
+                <thead>
+                    <tr>
+                        <th>Bidang Yang Diikuti</th>
+                        <th>Nama Peserta</th>
+                        <th>No. MIS / NISN</th>
+                    </tr>
+                </thead>
+                <tbody id="table-peserta-body">
+                    <!-- Diisi otomatis oleh participants.js -->
+                </tbody>
+            </table>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-prev">Kembali</button>
+                <button type="button" class="btn-next btn-primary">Lanjut</button>
+            </div>
+        </div>
+
+        <!-- STEP 6: UPLOAD BUKTI PEMBAYARAN -->
+        <div id="step-6" class="wizard-step hidden">
+            <h2>Bukti Pembayaran</h2>
+            <p class="subtitle">Unggah bukti transfer pembayaran pendaftaran (Maksimal 5MB):</p>
+            <h3>Keterangan</h3>
+            <p>Per @Rp 30.000 x 12 Peserta. Total per Unit @Rp 360.000</p>
+
+            <div id="dropzone" class="dropzone">
+                <p>Seret file ke sini atau <button type="button" id="btn-browse" class="btn-link">Pilih File</button></p>
+                <input type="file" id="file-payment" class="hidden" accept="image/*,.pdf">
+            </div>
+
+            <div id="file-info" class="file-info hidden">
+                <span id="file-name"></span>
+                <button type="button" id="btn-remove-file" class="btn-danger-text">Hapus</button>
+            </div>
+            <span id="error-file" class="error-text"></span>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-prev">Kembali</button>
+                <button type="button" class="btn-next btn-primary">Lanjut</button>
+            </div>
+        </div>
+
+        <!-- STEP 7: REVIEW DATA -->
+        <div id="step-7" class="wizard-step hidden">
+            <h2>Ringkasan Pendaftaran</h2>
+            <p class="subtitle">Periksa kembali seluruh data sebelum dikirim:</p>
+
+            <div id="review-content" class="review-box"></div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn-prev">Kembali</button>
+                <button type="button" id="btn-submit" class="btn-success">Kirim Pendaftaran</button>
+            </div>
+        </div>
+
+        <!-- STEP SUKSES PENDAFTARAN -->
+        <div id="step-8" class="wizard-step hidden">
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 50px; color: #4CAF50;">✓</div>
+                <h2>Pendaftaran Berhasil!</h2>
+                <p>Data pendaftaran Anda telah tercatat ke dalam sistem dan konfirmasi ke kontak person yang tertera di s.id.</p>
+                
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0; font-weight: bold; color: #374151;">Nomor Registrasi Anda:</p>
+                    <h3 id="success-reg-number" style="color: #dc2626; font-size: 24px; margin: 8px 0;">-</h3>
+                </div>
+
+                <!-- CONTAINER UNTUK TOMBOL GRUP WA -->
+                <div id="group-wa-container"></div>
+
+                <p style="font-size: 12px; color: #6b7280; margin-top: 20px;">
+                    Harap simpan nomor registrasi ini sebagai bukti pendaftaran.
+                </p>
+            </div>
+        </div>
+
+    <!-- Script JavaScript Internal -->
+    <script src="state.js"></script>
+    <script src="validation.js"></script>
+    <script src="upload.js"></script>
+    <script src="participants.js"></script>
+    <script src="review.js"></script>
+    <script src="integration.js"></script>
+    <script src="navigation.js"></script>
+</body>
+</html>

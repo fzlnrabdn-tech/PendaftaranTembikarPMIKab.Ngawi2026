@@ -1,0 +1,42 @@
+/* Styling Khusus Tampilan Ponsel (Mobile) */
+@media screen and (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .form-container {
+        padding: 18px;
+        border-radius: 8px;
+    }
+
+    /* Kartu Jenjang menjadi 1 Kolom */
+    .jenjang-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .jenjang-card {
+        padding: 12px;
+        text-align: left;
+    }
+
+    .jenjang-card h3 {
+        font-size: 15px;
+    }
+
+    /* Tombol Navigasi Berdampingan Fleksibel */
+    .action-buttons {
+        gap: 10px;
+    }
+
+    button {
+        flex: 1;
+        padding: 12px 10px;
+        font-size: 13px;
+    }
+
+    /* Dropzone Upload */
+    .dropzone {
+        padding: 20px 10px;
+    }
+}
