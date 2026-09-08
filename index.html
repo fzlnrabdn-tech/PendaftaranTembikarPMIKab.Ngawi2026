@@ -145,13 +145,35 @@
             </div>
         </div>
 
-        <!-- STEP 6: UPLOAD BUKTI PEMBAYARAN -->
+       <!-- STEP 6: UPLOAD BUKTI PEMBAYARAN -->
         <div id="step-6" class="wizard-step hidden">
             <h2>Bukti Pembayaran</h2>
             <p class="subtitle">Unggah bukti transfer pembayaran pendaftaran (Maksimal 5MB):</p>
-            <h3>Keterangan</h3>
-            <p>Per @Rp 30.000 x 12 Peserta. Total per Unit @Rp 360.000</p>
 
+            <!-- Kartu Informasi & Rekening Pembayaran -->
+            <div style="background-color: #f8f9fa; border-left: 4px solid #dc3545; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #dc3545; font-size: 16px; font-weight: bold;">
+                    Informasi Pembayaran
+                </h3>
+                
+                <p style="margin: 6px 0; font-size: 14px; color: #333;">
+                    Biaya pendaftaran sebesar <strong>Rp 30.000 / peserta</strong>.<br>
+                    Total pembayaran per unit adalah <strong>Rp 360.000</strong> (12 Peserta).
+                </p>
+
+                <div style="background-color: #ffffff; border: 1px solid #e9ecef; padding: 12px; border-radius: 6px; margin: 12px 0;">
+                    <div style="font-size: 13px; color: #6c757d;">Transfer Ke:</div>
+                    <div style="font-size: 15px; font-weight: bold; color: #212529;">Bank Jatim</div>
+                    <div style="font-size: 18px; font-weight: bold; color: #dc3545; letter-spacing: 0.5px;">0103007499</div>
+                    <div style="font-size: 13px; color: #495057;">a.n. <strong>PMI KABUPATEN NGAWI</strong></div>
+                </div>
+
+                <p style="margin: 0; font-size: 12px; color: #6c757d; font-style: italic;">
+                    * Pastikan bukti transfer yang diunggah terlihat jelas dan terbaca.
+                </p>
+            </div>
+
+            <!-- Dropzone Input File Upload -->
             <div id="dropzone" class="dropzone">
                 <p>Seret file ke sini atau <button type="button" id="btn-browse" class="btn-link">Pilih File</button></p>
                 <input type="file" id="file-payment" class="hidden" accept="image/*,.pdf">
@@ -163,22 +185,24 @@
             </div>
             <span id="error-file" class="error-text"></span>
 
+            <!-- Navigasi Tombol -->
             <div class="action-buttons">
                 <button type="button" class="btn-prev">Kembali</button>
                 <button type="button" class="btn-next btn-primary">Lanjut</button>
             </div>
         </div>
 
-        <!-- STEP 7: REVIEW DATA -->
+        <!-- STEP 7: RINGKASAN PENDAFTARAN -->
         <div id="step-7" class="wizard-step hidden">
             <h2>Ringkasan Pendaftaran</h2>
             <p class="subtitle">Periksa kembali seluruh data sebelum dikirim:</p>
 
-            <div id="review-content" class="review-box"></div>
+            <!-- Wadah ini akan diisi otomatis oleh review.js menjadi tabel -->
+            <div id="review-container"></div>
 
             <div class="action-buttons">
                 <button type="button" class="btn-prev">Kembali</button>
-                <button type="button" id="btn-submit" class="btn-success">Kirim Pendaftaran</button>
+                <button type="button" id="btn-submit" class="btn-primary">Kirim Pendaftaran</button>
             </div>
         </div>
 
