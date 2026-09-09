@@ -10,8 +10,7 @@ window.appState.payment = window.appState.payment || {};
 
 async function submitRegistration() {
     const btnSubmit = document.getElementById('btn-submit');
-    let iframe;
-    let form;
+    let iframe, form;
 
     if (btnSubmit) {
         btnSubmit.disabled = true;
@@ -19,22 +18,15 @@ async function submitRegistration() {
     }
 
     try {
-        // 1. Kumpulkan data Pembina & Peserta dari DOM HTML
-        const formExtra = collectFormData();
-
-        // 2. Buat ID Registrasi unik
+        const formData = collectFormData();
         const regNumber = "TBK-2026-" + Math.floor(100000 + Math.random() * 900000);
-
-        // Ambil data file bukti dari appState (yang dibuat oleh upload.js)
         const paymentState = window.appState?.payment || {};
 
         const payload = {
             registrationNumber: regNumber,
-            registration: formExtra.registration,
-            participants: formExtra.peserta,
+            registration: formData.registration,
+            participants: formData.participants,
             paymentUrl: paymentState.fileName || "Uploaded",
-            
-            // --- INTEGRASI GOOGLE DRIVE ---
             paymentBase64: paymentState.file || "",
             paymentMimeType: paymentState.fileType || "image/jpeg"
         };
@@ -46,7 +38,6 @@ async function submitRegistration() {
             return;
         }
 
-        // 4. Kirim data ke Apps Script via Hidden Form + iframe (Anti-Stuck/Anti-CORS)
         const iframeName = 'hidden_iframe_' + Date.now();
         iframe = document.createElement('iframe');
         iframe.name = iframeName;
@@ -67,12 +58,11 @@ async function submitRegistration() {
         document.body.appendChild(form);
         form.submit();
 
-        // Jeda 3.5 detik untuk memberi waktu upload file Base64 via jaringan HP
         setTimeout(() => {
             if (form?.parentNode) form.parentNode.removeChild(form);
             if (iframe?.parentNode) iframe.parentNode.removeChild(iframe);
             handlePostSubmit({ status: "SUCCESS", registrationNumber: regNumber });
-        }, 3500);
+        }, 4000);
 
     } catch (error) {
         console.error("Gagal mengirim data:", error);
@@ -91,13 +81,11 @@ function handlePostSubmit(result = {}) {
         clearDraft();
     }
 
-    // 1. Tampilkan Nomor Registrasi
     const regNumEl = document.getElementById('success-reg-number');
     if (regNumEl) {
         regNumEl.textContent = result?.registrationNumber || '-';
     }
 
-    // 2. Tampilkan Tombol Link Grup WhatsApp
     const waLink = result?.groupUrl || "https://chat.whatsapp.com/IEmoiTRIGLgH4FoUCu4E7O?s=cl&p=a&mlu=4&ilr=4";
     const groupContainer = document.getElementById('group-wa-container');
     if (groupContainer) {
@@ -111,7 +99,6 @@ function handlePostSubmit(result = {}) {
         `;
     }
 
-    // 3. Pindah ke Step 8 (Halaman Sukses)
     if (typeof goToStep === 'function') {
         goToStep(8);
     } else {
@@ -122,69 +109,76 @@ function handlePostSubmit(result = {}) {
 function collectFormData() {
     const getInputValue = (...ids) => {
         for (const id of ids) {
-            const value = document.getElementById(id)?.value?.trim?.();
+            const el = document.getElementById(id);
+            const value = el?.value?.trim?.();
             if (value) return value;
         }
         return "";
     };
 
-    const unit = getInputValue("unit-name", "unit");
-    const noUnit = getInputValue("unit-number", "noUnit");
-    const contactName = getInputValue("contact-name", "cpNama");
-    const contactPhone = getInputValue("contact-phone", "cpKontak");
+    const unit = getInputValue("unit");
+    const noUnit = getInputValue("noUnit");
+    const contactName = getInputValue("cpNama");
+    const contactPhone = getInputValue("cpKontak");
 
-    // 1. Data Pembina (dengan Safe Optional Chaining)
-    const pembina1Nama = document.getElementById("pembina_nama_1")?.value?.trim() || "";
-    const pembina1Nip  = document.getElementById("pembina_nip_1")?.value?.trim() || "";
-    const pembina2Nama = document.getElementById("pembina_nama_2")?.value?.trim() || "";
-    const pembina2Nip  = document.getElementById("pembina_nip_2")?.value?.trim() || "";
+    // 1. AMBIL JENJANG
+    const selectedCard = document.querySelector('.jenjang-card.selected');
+    let rawJenjang = selectedCard?.getAttribute('data-jenjang') || 
+                     window.appState?.registration?.jenjang || 
+                     "MULA";
+    let jenjangVal = String(rawJenjang).toUpperCase().trim();
 
-    const pembina = [];
-    if (pembina1Nama) {
-        pembina.push({ ket: "Pembina 1", nama: pembina1Nama, nip: pembina1Nip });
+    // 2. AMBIL DATA PEMBINA
+    const pembinaList = [];
+    const p1Nama = getInputValue("pembina_nama_1");
+    const p1Nip = getInputValue("pembina_nip_1");
+    if (p1Nama) {
+        pembinaList.push({ nama: p1Nama, nip: p1Nip || "-", ket: "Pembina 1" });
     }
-    if (pembina2Nama) {
-        pembina.push({ ket: "Pembina 2", nama: pembina2Nama, nip: pembina2Nip });
+
+    const p2Nama = getInputValue("pembina_nama_2");
+    const p2Nip = getInputValue("pembina_nip_2");
+    if (p2Nama) {
+        pembinaList.push({ nama: p2Nama, nip: p2Nip || "-", ket: "Pembina 2" });
     }
 
-    // 2. Data Peserta (Pengaman jika dibuka via HP/Browser Mobile)
-    const peserta = [];
+    // 3. AMBIL DATA PESERTA
+    const participants = [];
     const tableBody = document.getElementById("table-peserta-body");
     if (tableBody) {
         const rows = tableBody.querySelectorAll("tr");
         rows.forEach((row) => {
-            if (!row) return;
+            const namaInput = row.querySelector(".peserta-nama");
+            const nisnInput = row.querySelector(".peserta-nisn");
+            const bidangCell = row.cells[0]?.innerText?.trim() || "-";
 
-            const bidang = row?.cells?.[0]?.innerText?.trim?.() || "";
-            const namaInput = row?.querySelector?.(".peserta-nama");
-            const nisnInput = row?.querySelector?.(".peserta-nisn");
-
-            const namaVal = namaInput?.value?.trim?.() || "";
-            const nisnVal = nisnInput?.value?.trim?.() || "";
+            const namaVal = namaInput?.value?.trim() || "";
+            const nisnVal = nisnInput?.value?.trim() || "";
 
             if (namaVal !== "") {
-                peserta.push({
+                participants.push({
                     namaPeserta: namaVal,
-                    noMisNisn: nisnVal,
-                    giat: [bidang]
+                    noMisNisn: nisnVal || "-",
+                    giat: bidangCell
                 });
             }
         });
     }
 
-    return {
-        registration: {
-            unit: unit,
-            noUnit: noUnit,
-            contactName: contactName,
-            contactPhone: contactPhone,
-            contactPerson: contactName,
-            kontakPerson: contactName ? `${contactName} (${contactPhone})` : contactPhone,
-            jenjang: window.appState?.registration?.jenjang || window.appState?.jenjang || "MULA",
-            pembina: pembina
-        },
-        pembina: pembina,
-        peserta: peserta,
-        kontakPerson: contactName ? `${contactName} (${contactPhone})` : contactPhone
+    const registrationData = {
+        unit: unit || "-",
+        noUnit: noUnit || "-",
+        contactName: contactName || "-",
+        contactPhone: contactPhone || "-",
+        jenjang: jenjangVal,
+        pembina: pembinaList
     };
-}
+
+    window.appState.registration = registrationData;
+    window.appState.participants = participants;
+
+    return {
+        registration: registrationData,
+        participants: participants
+    };
+} 
