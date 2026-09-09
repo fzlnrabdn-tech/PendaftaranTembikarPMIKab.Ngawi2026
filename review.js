@@ -12,23 +12,22 @@ function escapeHtml(text) {
 }
 
 function renderReview() {
-  // Cek ID container di HTML (mencakup review-content atau review-container)
   var container = document.getElementById("review-content") || document.getElementById("review-container");
   if (!container) return;
 
   var state = window.appState || {};
   var reg = state.registration || {};
   var participants = state.participants || [];
-  var payment = state.payment || {}; // Mengambil data dari upload.js
+  var payment = state.payment || {};
 
-  // Ambil data Contact Person & Pembina dari input HTML jika di state belum terisi
-  var cpNama = (document.getElementById('cpNama')?.value.trim()) || reg.contactName || reg.contactPerson || '-';
-  var cpKontak = (document.getElementById('cpKontak')?.value.trim()) || reg.contactPhone || reg.noWa || '-';
+  // Ambil data Pembina & CP dari state.js atau fallback dari input HTML jika user belum simpan state
+  var pembina = reg.namaPembina || (document.getElementById('pembinaNama')?.value.trim()) || '-';
+  var cp = reg.kontakPerson || (document.getElementById('cpNama')?.value.trim()) || '-';
 
-  // 1. Tabel Data Unit / Sekolah & Pembina
+  // 1. Data Pendaftaran & Unit
   var html = `
     <div style="margin-bottom: 20px;">
-      <h4 style="margin-bottom: 8px; color: #dc3545; font-size: 15px; font-weight: bold;">Data Pendaftaran</h4>
+      <h4 style="margin-bottom: 8px; color: #d30d0d; font-size: 15px; font-weight: bold;">Data Pendaftaran</h4>
       <table style="width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid #dee2e6;">
         <tbody>
           <tr style="border-bottom: 1px solid #dee2e6;">
@@ -41,29 +40,29 @@ function renderReview() {
           </tr>
           <tr style="border-bottom: 1px solid #dee2e6;">
             <th style="padding: 8px; background: #f8f9fa; text-align: left; color: #495057;">Contact Person</th>
-            <td style="padding: 8px; color: #212529;">${escapeHtml(cpNama)} (${escapeHtml(cpKontak)})</td>
+            <td style="padding: 8px; color: #212529;">${escapeHtml(cp)}</td>
           </tr>
           <tr style="border-bottom: 1px solid #dee2e6;">
             <th style="padding: 8px; background: #f8f9fa; text-align: left; color: #495057;">Pembina</th>
-            <td style="padding: 8px; color: #212529;">${(reg.pembina || []).map(p => escapeHtml(p.nama)).filter(Boolean).join(" / ") || "-"}</td>
+            <td style="padding: 8px; color: #212529;">${escapeHtml(pembina)}</td>
           </tr>
         </tbody>
       </table>
     </div>
   `;
 
-  // 2. Tabel Daftar Peserta
+  // 2. Tabel Daftar Peserta (Membaca namaPeserta & noMisNisn dari state.js)
   html += `
     <div style="margin-bottom: 20px;">
-      <h4 style="margin-bottom: 8px; color: #dc3545; font-size: 15px; font-weight: bold;">Daftar Peserta (${participants.length} Orang)</h4>
+      <h4 style="margin-bottom: 8px; color: #d30d0d; font-size: 15px; font-weight: bold;">Daftar Peserta (${participants.length} Orang)</h4>
       <div style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; font-size: 12px; border: 1px solid #dee2e6;">
           <thead>
-            <tr style="background-color: #dc3545; color: white; text-align: left;">
-              <th style="padding: 6px; width: 30px; text-align: center;">No</th>
-              <th style="padding: 6px;">Nama Peserta</th>
-              <th style="padding: 6px;">NISN / MIS</th>
-              <th style="padding: 6px;">Bidang Giat</th>
+            <tr style="background-color: #d30d0d; color: white; text-align: left;">
+              <th style="padding: 8px; width: 35px; text-align: center;">No</th>
+              <th style="padding: 8px;">Nama Peserta</th>
+              <th style="padding: 8px;">NISN / MIS</th>
+              <th style="padding: 8px;">Bidang Giat</th>
             </tr>
           </thead>
           <tbody>
@@ -76,10 +75,10 @@ function renderReview() {
       var giatStr = Array.isArray(p.giat) ? p.giat.join(", ") : (p.giat || "-");
       html += `
         <tr style="border-bottom: 1px solid #dee2e6; background-color: ${index % 2 === 0 ? '#ffffff' : '#f8f9fa'};">
-          <td style="padding: 6px; text-align: center; font-weight: bold;">${index + 1}</td>
-          <td style="padding: 6px; font-weight: bold; color: #212529;">${escapeHtml(p.namaPeserta || "-")}</td>
-          <td style="padding: 6px; color: #495057;">${escapeHtml(p.noMisNisn || "-")}</td>
-          <td style="padding: 6px; color: #495057;">${escapeHtml(giatStr)}</td>
+          <td style="padding: 8px; text-align: center; font-weight: bold;">${index + 1}</td>
+          <td style="padding: 8px; font-weight: bold; color: #212529;">${escapeHtml(p.namaPeserta || "-")}</td>
+          <td style="padding: 8px; color: #495057;">${escapeHtml(p.noMisNisn || "-")}</td>
+          <td style="padding: 8px; color: #495057;">${escapeHtml(giatStr)}</td>
         </tr>
       `;
     });
@@ -92,15 +91,15 @@ function renderReview() {
     </div>
   `;
 
-  // 3. Status File Bukti Pembayaran (Membaca payment.fileName dari upload.js)
+  // 3. Status File Bukti Pembayaran
   var fileName = payment.fileName || 
                  state.paymentFileName || 
                  (document.getElementById('file-name')?.innerText) || 
-                 (payment.file ? "Bukti_Pembayaran_Terunggah.jpg" : "Belum ada file diunggah");
+                 "Belum ada file diunggah";
 
   html += `
     <div style="margin-bottom: 10px;">
-      <h4 style="margin-bottom: 8px; color: #dc3545; font-size: 15px; font-weight: bold;">Bukti Pembayaran</h4>
+      <h4 style="margin-bottom: 8px; color: #d30d0d; font-size: 15px; font-weight: bold;">Bukti Pembayaran</h4>
       <div style="padding: 10px; background: #e9ecef; border-radius: 6px; font-size: 12px; border: 1px solid #ced4da; color: #212529;">
         📎 <strong>File Terpilih:</strong> ${escapeHtml(fileName)}
       </div>
@@ -110,5 +109,4 @@ function renderReview() {
   container.innerHTML = html;
 }
 
-// Ekspor fungsi agar bisa dipanggil saat navigasi step
 window.renderReview = renderReview;
