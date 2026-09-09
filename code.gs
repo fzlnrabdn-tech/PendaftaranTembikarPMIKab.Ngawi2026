@@ -8,25 +8,27 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    // 1. Parsing Data Masuk
+    // 1. Parsing Data Masuk (Handling Multi-format Payload)
     var data;
     if (e && e.parameter && e.parameter.postData) {
       data = JSON.parse(e.parameter.postData);
     } else if (e && e.postData && e.postData.contents) {
       data = JSON.parse(e.postData.contents);
+    } else if (e && e.parameter) {
+      data = e.parameter;
     } else {
       throw new Error("Payload tidak ditemukan");
     }
 
-    if (!data || typeof data !== "object") {
-      throw new Error("Payload tidak valid");
+    if (typeof data === "string") {
+      data = JSON.parse(data);
     }
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var reg = data.registration || {};
     var participants = Array.isArray(data.participants) ? data.participants : [];
     var pembinaList = Array.isArray(reg.pembina) ? reg.pembina : [];
-    var jenjangStr = String(reg.jenjang || "MULA").toUpperCase(); // MULA, MADYA, atau WIRA
+    var jenjangStr = String(reg.jenjang || "MULA").toUpperCase().trim(); // MULA, MADYA, atau WIRA
 
     // Format Tanggal Waktu WIB
     var timeStampStr = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss");
@@ -34,65 +36,61 @@ function doPost(e) {
     // Link Grup WhatsApp Peserta
     var waGroupLink = "https://chat.whatsapp.com/IEmoiTRIGLgH4FoUCu4E7O?s=cl&p=a&mlu=4&ilr=4";
 
-    // 2. Upload Bukti Pembayaran ke Google Drive (jika ada data Base64)
+    // 2. Upload Bukti Pembayaran ke Google Drive
     var finalPaymentUrl = data.paymentUrl || "-";
     if (data.paymentBase64 && data.paymentBase64.length > 50) {
       var fileName = "BUKTI_" + (data.registrationNumber || "REG") + "_" + String(reg.unit || "UNIT").replace(/[^a-zA-Z0-9]/g, "_");
       finalPaymentUrl = uploadFileToDrive(data.paymentBase64, fileName, data.paymentMimeType);
     }
 
-    // Contact Person Langkah 3 menjadi kolom E dan F ADMINISTRASI
+    // Contact Person & Pembina
     var namaCP = reg.contactName || reg.contactPerson || reg.kontakPerson || "-";
     var noWA = reg.contactPhone || reg.noWa || reg.kontak || "-";
 
     // 3. Tulis Data ke Sheet 'ADMINISTRASI'
-    var sheetAdmin = ss.getSheetByName("ADMINISTRASI");
+    var sheetAdmin = ss.getSheetByName("ADMINISTRASI") || ss.getSheets()[0];
     if (sheetAdmin) {
       sheetAdmin.appendRow([
-        data.registrationNumber, // Kolom A: No. Registrasi
-        timeStampStr,            // Kolom B: Waktu Pendaftaran
-        reg.unit || "-",         // Kolom C: Unit / Sekolah
-        reg.noUnit || "-",       // Kolom D: No Unit
-        namaCP,                  // Kolom E: NamaPembina dari Contact Person
-        noWA,                    // Kolom F: KontakPerson dari No. WhatsApp/Telepon
-        jenjangStr,              // Kolom G: Tingkat / Jenjang
-        finalPaymentUrl          // Kolom H: BuktiPembayaran
+        data.registrationNumber || "-", // Kolom A: No. Registrasi
+        timeStampStr,                    // Kolom B: Waktu Pendaftaran
+        reg.unit || "-",                 // Kolom C: Unit / Sekolah
+        reg.noUnit || "-",               // Kolom D: No Unit
+        namaCP,                          // Kolom E: Nama Contact Person
+        "'" + noWA,                      // Kolom F: No. WhatsApp
+        jenjangStr,                      // Kolom G: Tingkat / Jenjang
+        finalPaymentUrl                  // Kolom H: Bukti Pembayaran Link
       ]);
     }
 
     // 4. Tulis Data Pembina ke Sheet 'PEMBINA [JENJANG]'
-    var sheetPembinaName = "PEMBINA " + jenjangStr;
-    var sheetPembina = ss.getSheetByName(sheetPembinaName);
-
+    var sheetPembina = getSheetFlexible(ss, ["PEMBINA " + jenjangStr, "PEMBINA_" + jenjangStr, "PEMBINA"]);
     if (sheetPembina) {
       pembinaList.forEach(function(pem) {
         pem = pem || {};
         sheetPembina.appendRow([
-          data.registrationNumber,
-          reg.unit,
-          reg.noUnit,
+          data.registrationNumber || "-",
+          reg.unit || "-",
+          reg.noUnit || "-",
           "'" + (pem.nip || "-"), // NIP / MIS
-          pem.nama,
+          pem.nama || "-",
           pem.ket || "Pembina"
         ]);
       });
     }
 
     // 5. Tulis Data Peserta ke Sheet 'PESERTA [JENJANG]'
-    var sheetPesertaName = "PESERTA " + jenjangStr;
-    var sheetPeserta = ss.getSheetByName(sheetPesertaName);
-
+    var sheetPeserta = getSheetFlexible(ss, ["PESERTA " + jenjangStr, "PESERTA_" + jenjangStr, "PESERTA"]);
     if (sheetPeserta) {
       participants.forEach(function(p) {
         p = p || {};
         var giatStr = Array.isArray(p.giat) ? p.giat.join(", ") : (p.giat || "-");
         sheetPeserta.appendRow([
-          data.registrationNumber,
-          reg.unit,
-          reg.noUnit,
-          "'" + (p.noMisNisn || "-"), // NISN
-          p.namaPeserta,
-          giatStr // Bidang Giat / Keterangan
+          data.registrationNumber || "-",
+          reg.unit || "-",
+          reg.noUnit || "-",
+          "'" + (p.noMisNisn || "-"), // NISN / MIS
+          p.namaPeserta || "-",
+          giatStr                    // Bidang Giat / Keterangan
         ]);
       });
     }
@@ -112,13 +110,21 @@ function doPost(e) {
   }
 }
 
-// Fungsi Pembantu: Menyimpan file Base64 ke Google Drive (Dukungan Universal API v2, v3, & DriveApp)
+// Helper untuk memilih Sheet secara fleksibel
+function getSheetFlexible(ss, possibleNames) {
+  for (var i = 0; i < possibleNames.length; i++) {
+    var sh = ss.getSheetByName(possibleNames[i]);
+    if (sh) return sh;
+  }
+  return null;
+}
+
+// Upload File ke Google Drive
 function uploadFileToDrive(base64Data, fileName, mimeType) {
   try {
     var base64Clean = base64Data;
     var type = mimeType || "image/jpeg";
 
-    // 1. Bersihkan prefix dataURI jika ada & deteksi MIME Type secara otomatis
     if (base64Data.indexOf(",") !== -1) {
       var parts = base64Data.split(",");
       base64Clean = parts[1];
@@ -128,7 +134,6 @@ function uploadFileToDrive(base64Data, fileName, mimeType) {
       }
     }
 
-    // 2. Tambahkan Ekstensi File Otomatis
     var ext = "";
     if (type.indexOf("pdf") !== -1) ext = ".pdf";
     else if (type.indexOf("png") !== -1) ext = ".png";
@@ -139,9 +144,7 @@ function uploadFileToDrive(base64Data, fileName, mimeType) {
     var bytes = Utilities.base64Decode(base64Clean);
     var blob = Utilities.newBlob(bytes, type, fullFileName);
 
-    // 3. Upload Menggunakan Advanced Drive API (Mendukung v2 & v3 secara Otomatis)
     if (typeof Drive !== "undefined" && Drive.Files) {
-      // Jika Menggunakan Drive API v3
       if (typeof Drive.Files.create === "function") {
         var fileV3 = Drive.Files.create({
           name: fullFileName,
@@ -149,9 +152,7 @@ function uploadFileToDrive(base64Data, fileName, mimeType) {
           parents: [DRIVE_FOLDER_ID]
         }, blob);
         return "https://drive.google.com/file/d/" + fileV3.id + "/view";
-      } 
-      // Jika Menggunakan Drive API v2
-      else if (typeof Drive.Files.insert === "function") {
+      } else if (typeof Drive.Files.insert === "function") {
         var fileV2 = Drive.Files.insert({
           title: fullFileName,
           mimeType: type,
@@ -161,7 +162,6 @@ function uploadFileToDrive(base64Data, fileName, mimeType) {
       }
     }
 
-    // 4. Fallback jika Service Advanced Drive tidak aktif (Menggunakan DriveApp bawaan)
     var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
     var fileFallback = folder.createFile(blob);
     fileFallback.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -170,9 +170,4 @@ function uploadFileToDrive(base64Data, fileName, mimeType) {
   } catch (err) {
     return "Error Upload: " + err.toString();
   }
-}
-
-function paksaIzinDrive() {
-  var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-  Logger.log("Folder berhasil diakses: " + folder.getName());
 }
