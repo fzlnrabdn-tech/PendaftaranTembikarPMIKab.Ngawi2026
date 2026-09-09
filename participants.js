@@ -1,7 +1,6 @@
-  /**
+/**
  * PARTICIPANTS FORM BUILDER — TEMBIKAR 2026
  */
-// Daftar Bidang Lomba sesuai urutan spreadsheet
 const listBidangLomba = [
   "YS Gerakan Kepalangmerahan",
   "YS Donor Darah Sukarela",
@@ -17,7 +16,7 @@ const listBidangLomba = [
   "Jurnalistik - LRC"
 ];
 
-// Fungsi untuk membuat baris input peserta secara statis
+// 1. Fungsi Membuat Tabel Peserta
 function renderPesertaTable() {
   const tbody = document.getElementById("table-peserta-body");
   if (!tbody) return;
@@ -37,67 +36,67 @@ function renderPesertaTable() {
     `;
     tbody.appendChild(tr);
   });
+
+  // Pasang event listener agar setiap kali disetik langsung masuk appState
+  attachInputListeners();
 }
 
-// Jalankan saat dokumen selesai di-load
-document.addEventListener("DOMContentLoaded", renderPesertaTable);
+// 2. Fungsi Mengambil Data Input & Menyimpan ke appState
+function collectParticipantData() {
+  if (!window.appState) return;
 
+  const namaInputs = document.querySelectorAll('.peserta-nama');
+  const nisnInputs = document.querySelectorAll('.peserta-nisn');
+  
+  const participants = [];
 
-function updateParticipantData(index, field, value) {
-    if (window.appState.participants[index]) {
-        window.appState.participants[index][field] = value;
-        if (typeof saveDraft === 'function') saveDraft();
+  namaInputs.forEach((input, index) => {
+    const nama = input.value.trim();
+    const nisn = nisnInputs[index] ? nisnInputs[index].value.trim() : "";
+    const bidang = listBidangLomba[index];
+
+    // Hanya simpan baris yang diisi nama pesertanya
+    if (nama !== "") {
+      participants.push({
+        namaPeserta: nama,
+        noMisNisn: nisn,
+        giat: bidang
+      });
     }
+  });
+
+  window.appState.participants = participants;
+
+  // Tarik juga data Pembina & Contact Person dari DOM jika ada
+  if (window.appState.registration) {
+    const pembinaEl = document.getElementById('pembinaNama') || document.querySelector('input[name="pembina"]');
+    const cpEl = document.getElementById('cpNama') || document.querySelector('input[name="contactPerson"]');
+    
+    if (pembinaEl && pembinaEl.value) window.appState.registration.namaPembina = pembinaEl.value.trim();
+    if (cpEl && cpEl.value) window.appState.registration.kontakPerson = cpEl.value.trim();
+  }
+
+  if (typeof saveDraft === 'function') saveDraft();
 }
 
-function updateParticipantGiat(index, giatName, isChecked) {
-    if (!window.appState.participants[index]) return;
-    if (!window.appState.participants[index].giat) {
-        window.appState.participants[index].giat = [];
-    }
-
-    var list = window.appState.participants[index].giat;
-    if (isChecked) {
-        if (list.indexOf(giatName) === -1) list.push(giatName);
-    } else {
-        window.appState.participants[index].giat = list.filter(function(g) { return g !== giatName; });
-    }
-    if (typeof saveDraft === 'function') saveDraft();
+function attachInputListeners() {
+  const inputs = document.querySelectorAll('.peserta-nama, .peserta-nisn');
+  inputs.forEach(input => {
+    input.addEventListener('input', collectParticipantData);
+  });
 }
 
-function addParticipant() {
-    window.appState.participants.push({ noMisNisn: "", namaPeserta: "", giat: [] });
-    renderParticipants();
-    if (typeof saveDraft === 'function') saveDraft();
-}
+// 3. Pasang Event Listener saat Halaman di-load & Navigasi
+document.addEventListener("DOMContentLoaded", function() {
+  renderPesertaTable();
 
-function removeParticipant(index) {
-    if (window.appState.participants.length > 1) {
-        window.appState.participants.splice(index, 1);
-        renderParticipants();
-        if (typeof saveDraft === 'function') saveDraft();
+  // Dengarkan klik tombol navigasi Lanjut/Berikutnya untuk paksa sync data sebelum pindah Step
+  document.addEventListener('click', function(e) {
+    if (e.target && (e.target.classList.contains('btn-next') || e.target.id === 'btn-submit')) {
+      collectParticipantData();
+      if (typeof window.renderReview === 'function') {
+        window.renderReview();
+      }
     }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    renderParticipants();
-
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'btn-add-participant') {
-            e.preventDefault();
-            addParticipant();
-        }
-    });
-
-    var stepTarget = document.getElementById('step-5');
-    if (stepTarget) {
-        var observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.attributeName === 'class' && !stepTarget.classList.contains('hidden')) {
-                    renderParticipants();
-                }
-            });
-        });
-        observer.observe(stepTarget, { attributes: true });
-    }
+  });
 });
